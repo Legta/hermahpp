@@ -1,0 +1,1 @@
+This is @seikuz and I's first joint project. It is supposed to be a simple chat web app.
