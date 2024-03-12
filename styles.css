@@ -64,7 +64,7 @@ body {
     box-shadow: 0 0 15px;
 }
 
-.pastMessage {
+.past-message {
     max-width: 90vw;
     width: auto;
     justify-content: left;
@@ -80,3 +80,4 @@ body {
 .small-text {
     font-size: 0.5em;
 }
+
