@@ -81,3 +81,14 @@ body {
     font-size: 0.5em;
 }
 
+.past-message:hover .hover-info {
+    display:block;
+}
+
+.hover-info {
+    display: none;
+}
+
+.hidden-input {
+    display: none;
+}
