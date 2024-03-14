@@ -26,6 +26,7 @@ editButtonsParent.addEventListener('click', (event) => { //Listener that checks 
         const newMessage = document.getElementById(`edit-field-${targetMessageID}`)
         return closeEditInput(newMessage, event)
     }
+    if (event.target.id.startsWith('message-delete')) deleteMessage(event.target.id.slice(15));
 })
 
 editButtonsParent.addEventListener('keydown', (event) => {
@@ -102,4 +103,11 @@ function replaceItemInLocalStorage (messageID, newItem) {
         </div>
     `
     localStorage.setItem('savedMessages', JSON.stringify(previousMessages))
+}
+
+function deleteMessage (messageID) {
+    const selectedMessage = document.getElementById(`${messageID}`)
+    previousMessages.splice(findLocalStorageItemIndex(previousMessages, messageID), 1)
+    localStorage.setItem('savedMessages', JSON.stringify(previousMessages))
+    return selectedMessage.remove()
 }
