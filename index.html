@@ -11,14 +11,38 @@
 </head>
 <body>
     <div id="main-div">
-        <div id="message-elements">
-            <input type="text" id="message-input" autocomplete="off">
-            <button id="send-btn" type="button"></button>
+        <div id="welcome-screen">
+            <h1>Please sign up or sign in to use the app</h1>
+            <div id="welcome-btns">
+                <button id="signup">Sign up</button>
+                <button id="signin">Sign in</button>
+            </div>
         </div>
-        <div id="messages-column">
-            <!-- Messages sent will be inserted here -->
+        <div id="sign-up-modal">
+            <h1>Sign up</h1>
+            <div id="email-and-pass">
+                <p>Enter your email address:</p>
+                <input type="email" id="email-input" placeholder="legta@hermahs.com">
+                <p>Enter your password:</p>
+                <input type="password" id="password-input1">
+                <p>Confirm your password:</p>
+                <input type="password" id="password-input2">
+                <p><a href="./main-chat/index.html">main chat</a></p>
+                <button type="button" id="sign-up-btn">Sign up</button>
+            </div>
         </div>
-    </div>
+        <div id="sign-in-modal">
+            <h1>Sign in</h1>
+            <div id="email-and-pass-in">
+                <p>Enter your email address:</p>
+                <input type="email" id="email-input-in" placeholder="legta@hermahs.com">
+                <p>Enter your password:</p>
+                <input type="password" id="password-signin">
+                <p><a href="./main-chat/index.html">main chat</a></p>
+                <button type="button" id="sign-in-btn">Sign in</button>
+            </div>
+        </div>
+        <div id="background"></div>
     <script type="module" src="./main.js"></script>
 </body>
 </html>

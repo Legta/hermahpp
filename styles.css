@@ -9,86 +9,78 @@ body {
     scroll-behavior: smooth;
 }
 
+#welcome-screen {
+    display: flex;
+    align-self: center;
+    text-align: center;
+    flex-direction: column;
+    padding: 10px;
+    border-radius: 20px;
+}
+
+#welcome-btns button{
+    margin-bottom: 10px;;
+    padding: 10px;
+    width: 40%;
+}
+
 #main-div {
     width: 100vw;
     height: 100vh;
-}
-
-#messages-column {
-    display:flex;
-    flex-direction: column;
-    align-items: flex-start;
-    width: 90vw;
-    margin: 0 auto;
-}
-
-#message-elements {
-    position:fixed;
-    bottom: 0;
-    width: 90vw;
-    max-width: 1820px;
     display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    height: 5vh;
-    justify-content: center;
-    padding: 10px 4px;
-    align-items: center;
 }
 
-#send-btn{
-    background: url('/assets/icons/send-icon.png') no-repeat;
-    background-size: cover;
-    background-color: #5CABFA;
-    padding: 0;
-    margin: 0;
-    height: 35px;
-    width: 35px;
-    border: solid;
-    border-radius: 5px;
-    box-shadow: 0 0 15px;
+#welcome-screen {
+    background: white;
+    z-index: 4;
 }
 
-#send-btn:hover {
-    background-color: #84C2FF;
-}
-
-#sent-btn:active {
-    background-color: #0784FF;
-}
-
-#message-input {
-    width: 90%;
-    height: 30px;
-    border-radius: 5px;
-    box-shadow: 0 0 15px;
-}
-
-.past-message {
-    max-width: 90vw;
-    width: auto;
-    justify-content: left;
-    padding: 2px 4px;
-    margin-top: 6px;
-    background: lightgrey;
-    border-radius: 10px;
-    text-align: left;
-    box-shadow: 0 0 15px;
-    overflow-wrap: break-word;
-}
-
-.small-text {
-    font-size: 0.5em;
-}
-
-.past-message:hover .hover-info {
-    display:block;
-}
-
-.hover-info {
+#sign-up-modal {
+    position: fixed;
     display: none;
+    background: lightgray;
+    border-radius: 20px;
+    padding:10px;
+    left: 50%;
+    transform: translateX(-50%);
+    align-self: center;
+    z-index: 3;
+    gap:15px;
 }
 
-.hidden-input {
+#sign-up-modal h1 {
+    align-self: center;
+}
+
+#background {
+    position:fixed;
+    width: 100vw;
+    height: 100vh;
+    background: gray;
+    z-index: 0;
+}
+
+#email-and-pass {
+    padding: 5px;
+}
+
+#sign-in-modal {
+    position: fixed;
     display: none;
+    background: lightgray;
+    border-radius: 20px;
+    padding:10px;
+    left: 50%;
+    transform: translateX(-50%);
+    align-self: center;
+    z-index: 3;
+    gap:15px;
+}
+
+#sign-in-modal h1 {
+    align-self: center;
+}
+
+#email-and-pass-in {
+    padding: 5px;
 }
