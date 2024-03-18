@@ -67,8 +67,9 @@ body {
 }
 
 #email-and-pass {
+    margin: 0 auto;
     padding: 5px;
-    overflow: scroll;
+    overflow: auto;
 }
 
 #sign-in-modal {
