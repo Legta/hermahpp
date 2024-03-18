@@ -23,13 +23,17 @@
             <h1>Sign up</h1>
             <div id="email-and-pass">
                 <p>Enter your email address:</p>
-                <input type="email" id="email-input" placeholder="legta@hermahs.com">
+                <input type="email" id="email-input" placeholder="legta@hermahs.com" name="email-input" autocomplete="off" required>
+                <p class="invalid-email">Please enter a valid email address</p>
                 <p>Enter your password:</p>
                 <input type="password" id="password-input1">
                 <p>Confirm your password:</p>
                 <input type="password" id="password-input2">
+                <p class="invalid-password">Your password should be longer than 6 characters</p>
+                <p class="invalid-password-match">The passwords don't match</p>
                 <p><a href="./main-chat/index.html">main chat</a></p>
                 <button type="button" id="sign-up-btn">Sign up</button>
+                <p class="success-signup"></p>
             </div>
         </div>
         <div id="sign-in-modal">
@@ -38,7 +42,7 @@
                 <p>Enter your email address:</p>
                 <input type="email" id="email-input-in" placeholder="legta@hermahs.com">
                 <p>Enter your password:</p>
-                <input type="password" id="password-signin">
+                <input type="password" id="password-signin" autocomplete="off">
                 <p><a href="./main-chat/index.html">main chat</a></p>
                 <button type="button" id="sign-in-btn">Sign in</button>
             </div>

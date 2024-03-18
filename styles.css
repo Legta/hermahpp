@@ -41,6 +41,7 @@ body {
 #sign-up-modal {
     position: fixed;
     display: none;
+    width: 40%;
     background: lightgray;
     border-radius: 20px;
     padding:10px;
@@ -53,6 +54,8 @@ body {
 
 #sign-up-modal h1 {
     align-self: center;
+    padding-left: 10px;
+    overflow: hidden;
 }
 
 #background {
@@ -65,6 +68,7 @@ body {
 
 #email-and-pass {
     padding: 5px;
+    overflow: scroll;
 }
 
 #sign-in-modal {
@@ -86,4 +90,28 @@ body {
 
 #email-and-pass-in {
     padding: 5px;
+}
+
+.invalid-email {
+    display: none;
+    color: red;
+    font-size: 0.7em;
+}
+
+.invalid-password {
+    display: none;
+    color: red;
+    font-size: 0.7em;
+}
+
+.invalid-password-match {
+    display: none;
+    color: red;
+    font-size: 0.7em;
+}
+
+.success-signup {
+    color: green;
+    font-size: 0.7em;
+    overflow: auto;
 }
