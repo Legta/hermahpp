@@ -138,11 +138,6 @@ auth.onAuthStateChanged( async user => { //check if user is logged in on load
     }
   })
 
-  // loginEmail.addEventListener('keydown', (key) => {
-  //   if (key.key !== 'Enter') return;
-
-  // })
-
   document.getElementById('email-and-pass-in').addEventListener('keydown', key => {
     if (key.key !== 'Enter') return;
     const showErrors = showErrorsInInputSignIn();
