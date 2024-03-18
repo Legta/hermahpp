@@ -3,6 +3,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
+import { getAuth, signOut } from "firebase/auth";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -21,8 +22,23 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
+const auth = getAuth();
 
 //Firebase initialization end
+
+//Check if user is logged in, if not, redirect to homepage
+
+auth.onAuthStateChanged(user => {
+    if (user) {
+        if (user.emailVerified) {
+            
+        }
+        else {
+            alert('Your email is unverified. Returning to homepage...')
+            window.location.href = '../index.html'
+        }
+    } else return window.location.href = '../index.html'
+})
 
 //Get elements from document
 const messageElement = document.getElementById('message-input') 

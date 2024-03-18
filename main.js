@@ -3,7 +3,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import {getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut} from 'firebase/auth';
+import {getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification} from 'firebase/auth';
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -27,16 +27,24 @@ const auth = getAuth();
 //Firebase initialization end
 
 const loadingScreen = document.getElementById('loading-screen');
-auth.onAuthStateChanged(user => { //check if user is logged in on load
+auth.onAuthStateChanged( async user => { //check if user is logged in on load
   if (user) {
+    // await console.log(user.getIdToken())
     loadingScreen.innerHTML = `<p>Logged in as ${user.email}!</p>
-    <button id="logoutbtn" type="button">Log out</button>`
+    <button id="logoutbtn" type="button">Log out</button>`;
+    if (!user.emailVerified) {
+      loadingScreen.innerHTML = `<p>Logged in as ${user.email}!<br>Email has not been verified</p>
+      <button id="logoutbtn" type="button">Log out</button>`
+    } else if (user.emailVerified) {
+      loadingScreen.innerHTML = `<p>Logged in as ${user.email}!<br>Yippee! your email is verified</p>
+      <button id="logoutbtn" type="button">Log out</button>`
+      redirectUser()
+    }
     const signoutBtn = document.getElementById('logoutbtn')
-    // window.location.href = 'main-chat/index.html'
-    signoutBtn.addEventListener('click', event => {
+    signoutBtn.addEventListener('click', event => { //REMEMBER TO REMOVE THIS BUTTON
       signOut(auth).then(() => console.log('Sign out succesful')).catch(error => console.log(error))
     })
-  }
+  } 
   else {
     //Sign up flow implementation start
     const welcomeScreen = document.getElementById('welcome-screen')
@@ -54,34 +62,38 @@ auth.onAuthStateChanged(user => { //check if user is logged in on load
 
   registerBtn.addEventListener('click', showSignup)
 
-  document.getElementById('email-and-pass').addEventListener('keydown', event => {
+  document.getElementById('email-and-pass').addEventListener('keydown', async event => {
     if (event.key !== 'Enter') return;
     if (showErrorsInInputSignUp() === false) {
-      signUpUser(auth, signUpEmail.value, signUpPass1.value)
+      await signUpUser(auth, signUpEmail.value, signUpPass1.value)
     }
   })
 
   registerBtnModal.addEventListener('click', (event) => {
-    // showErrorsInInput()
     if (showErrorsInInputSignUp() === false) {
       signUpUser(auth, signUpEmail.value, signUpPass1.value)
     }
   })
 
-  function signUpUser (auth, email, password) {
+  async function signUpUser (auth, email, password) {
     createUserWithEmailAndPassword(auth, email, password)
-    .then((userCredential) => {
-      // console.log(userCredential.user.email)
+    .then(async (userCredential) => {
       signUpEmail.value = '';
       signUpPass1.value = '';
       signUpPass2.value = '';
       const successMessage = document.querySelector('.success-signup');
-      successMessage.innerText = `Successfully signed up with email ${userCredential.user.email}!`
+      successMessage.innerText = `Successfully signed up with email ${userCredential.user.email}!\nAn email has been sent to your address to verify it and complete the registration process`
       console.log('Signed up! Email: ' + userCredential.user.email)
+      auth.onAuthStateChanged(newUser => sendEmailVerification(newUser))
+      // redirectUser()
     })
     .catch(error => {
       console.log(error.code)
       console.log(error.message)
+      if (error.code === 'auth/email-already-in-use') {
+        errorTextPass2[0].style.display = 'flex'
+        errorTextPass2[0].innerText = 'Email is already in use.'
+      }
     })
   }
 
@@ -126,9 +138,17 @@ auth.onAuthStateChanged(user => { //check if user is logged in on load
     }
   })
 
-  loginEmail.addEventListener('keydown', (key) => {
-    if (key.key !== 'Enter') return;
+  // loginEmail.addEventListener('keydown', (key) => {
+  //   if (key.key !== 'Enter') return;
 
+  // })
+
+  document.getElementById('email-and-pass-in').addEventListener('keydown', key => {
+    if (key.key !== 'Enter') return;
+    const showErrors = showErrorsInInputSignIn();
+    if (showErrors === false) {
+      signInUser(auth, loginEmail.value, loginPassword.value)
+    }
   })
 
   function signInUser (auth, email, password) {
@@ -136,13 +156,21 @@ auth.onAuthStateChanged(user => { //check if user is logged in on load
     .then(userCredential => {
       loginEmail.value = ''
       loginPassword.value = ''
+      if (userCredential.emailVerified) redirectUser()
+      else {
+    errorTextPassLogin.style.display = 'flex'
+        errorTextPassLogin.innerText = 'You need to verify your email address!'
+      }
       // const user = userCredential.user
-      window.location.href = 'main-chat/index.html'
       // console.log(user)
     })
     .catch (error => {
       console.log(error.code)
       console.log(error.message)
+      if (error.code === 'auth/invalid-credential') {
+        errorTextPassLogin.style.display = 'flex'
+        errorTextPassLogin.innerText = 'Invalid credentials!'
+      }
     })
   }
 
@@ -154,6 +182,7 @@ auth.onAuthStateChanged(user => { //check if user is logged in on load
   }
 
   function showErrorsInInputSignIn () {
+    errorTextPassLogin.innerText = 'Enter a password'
     errorTextLogin.style.display = 'none'
     errorTextPassLogin.style.display = 'none'
     if (validateEmail(loginEmail.value) !== true) return errorTextLogin.style.display = 'flex';
@@ -165,3 +194,6 @@ auth.onAuthStateChanged(user => { //check if user is logged in on load
   }
 })
 
+function redirectUser() {
+  return window.location.href = 'main-chat/index.html'
+}
