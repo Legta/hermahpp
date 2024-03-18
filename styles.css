@@ -9,9 +9,24 @@ body {
     scroll-behavior: smooth;
 }
 
-#welcome-screen {
+#loading-screen {
     position: fixed;
     display: flex;
+    align-self: center;
+    text-align: center;
+    flex-direction: column;
+    padding: 20px;
+    border-radius: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40%;
+    background-color: white;
+    z-index: 1;
+}
+
+#welcome-screen {
+    position: fixed;
+    display: none;
     align-self: center;
     text-align: center;
     flex-direction: column;
@@ -19,6 +34,8 @@ body {
     border-radius: 20px;
     left: 50%;
     transform: translateX(-50%);
+    background: white;
+    z-index: 4;
 }
 
 #welcome-btns button{
@@ -31,11 +48,6 @@ body {
     width: 100vw;
     height: 100vh;
     display: flex;
-}
-
-#welcome-screen {
-    background: white;
-    z-index: 4;
 }
 
 #sign-up-modal {
@@ -90,7 +102,9 @@ body {
 }
 
 #email-and-pass-in {
+    margin: 0 auto;
     padding: 5px;
+    overflow: auto;
 }
 
 .invalid-email {
@@ -115,4 +129,16 @@ body {
     color: green;
     font-size: 0.7em;
     overflow: auto;
+}
+
+.invalid-email-login {
+    display: none;
+    color: red;
+    font-size: 0.7em;
+}
+
+.invalid-password-login {
+    display: none;
+    color: red;
+    font-size: 0.7em;
 }

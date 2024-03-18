@@ -11,12 +11,15 @@
 </head>
 <body>
     <div id="main-div">
+        <div id="loading-screen">
+            <h1>Checking user status...</h1>
+        </div>
         <div id="welcome-screen">
             <h1>Please sign up or sign in to use the app</h1>
             <div id="welcome-btns">
                 <button id="signup">Sign up</button>
                 <button id="signin">Sign in</button>
-                <p><a href="./main-chat/index.html">main chat</a></p>
+                <!-- <p><a href="./main-chat/index.html">main chat</a></p> -->
             </div>
         </div>
         <div id="sign-up-modal">
@@ -31,7 +34,7 @@
                 <input type="password" id="password-input2">
                 <p class="invalid-password">Your password should be longer than 6 characters</p>
                 <p class="invalid-password-match">The passwords don't match</p>
-                <p><a href="./main-chat/index.html">main chat</a></p>
+                <!-- <p><a href="./main-chat/index.html">main chat</a></p> -->
                 <button type="button" id="sign-up-btn">Sign up</button>
                 <p class="success-signup"></p>
             </div>
@@ -41,9 +44,11 @@
             <div id="email-and-pass-in">
                 <p>Enter your email address:</p>
                 <input type="email" id="email-input-in" placeholder="legta@hermahs.com">
+                <p class="invalid-email-login">Please enter a valid email address</p>
                 <p>Enter your password:</p>
                 <input type="password" id="password-signin" autocomplete="off">
-                <p><a href="./main-chat/index.html">main chat</a></p>
+                <p class="invalid-password-login">Enter a password</p>
+                <!-- <p><a href="./main-chat/index.html">main chat</a></p> -->
                 <button type="button" id="sign-in-btn">Sign in</button>
             </div>
         </div>

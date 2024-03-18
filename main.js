@@ -3,7 +3,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import {getAuth, createUserWithEmailAndPassword} from 'firebase/auth';
+import {getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut} from 'firebase/auth';
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -26,77 +26,142 @@ const auth = getAuth();
 
 //Firebase initialization end
 
-const registerBtn = document.getElementById('signup')
-const loginBtn = document.getElementById('signin')
-const registerBtnModal = document.getElementById('sign-up-btn');
-const loginBtnModal = document.getElementById('sign-in-btn')
-const signUpEmail = document.getElementById('email-input')
-const signUpPass1 = document.getElementById('password-input1')
-const signUpPass2 = document.getElementById('password-input2')
-const errorText = document.querySelectorAll('.invalid-email')
-const errorTextPass1 = document.querySelectorAll('.invalid-password') 
-const errorTextPass2 = document.querySelectorAll('.invalid-password-match') 
+const loadingScreen = document.getElementById('loading-screen');
+auth.onAuthStateChanged(user => { //check if user is logged in on load
+  if (user) {
+    loadingScreen.innerHTML = `<p>Logged in as ${user.email}!</p>
+    <button id="logoutbtn" type="button">Log out</button>`
+    const signoutBtn = document.getElementById('logoutbtn')
+    // window.location.href = 'main-chat/index.html'
+    signoutBtn.addEventListener('click', event => {
+      signOut(auth).then(() => console.log('Sign out succesful')).catch(error => console.log(error))
+    })
+  }
+  else {
+    //Sign up flow implementation start
+    const welcomeScreen = document.getElementById('welcome-screen')
+    const registerBtn = document.getElementById('signup')
+    const registerBtnModal = document.getElementById('sign-up-btn');
+    const signUpEmail = document.getElementById('email-input')
+    const signUpPass1 = document.getElementById('password-input1')
+    const signUpPass2 = document.getElementById('password-input2')
+    const errorText = document.querySelectorAll('.invalid-email')
+    const errorTextPass1 = document.querySelectorAll('.invalid-password') 
+    const errorTextPass2 = document.querySelectorAll('.invalid-password-match') 
 
-registerBtn.addEventListener('click', showSignup)
+  loadingScreen.style.display ='none'
+  welcomeScreen.style.display= 'flex'
 
-loginBtn.addEventListener('click', showSignIn)
+  registerBtn.addEventListener('click', showSignup)
 
-document.getElementById('email-and-pass').addEventListener('keydown', event => {
-  if (event.key !== 'Enter') return;
-  if (showErrorsInInput() === false) {
-    signUpUser(auth, signUpEmail.value, signUpPass1.value)
+  document.getElementById('email-and-pass').addEventListener('keydown', event => {
+    if (event.key !== 'Enter') return;
+    if (showErrorsInInputSignUp() === false) {
+      signUpUser(auth, signUpEmail.value, signUpPass1.value)
+    }
+  })
+
+  registerBtnModal.addEventListener('click', (event) => {
+    // showErrorsInInput()
+    if (showErrorsInInputSignUp() === false) {
+      signUpUser(auth, signUpEmail.value, signUpPass1.value)
+    }
+  })
+
+  function signUpUser (auth, email, password) {
+    createUserWithEmailAndPassword(auth, email, password)
+    .then((userCredential) => {
+      // console.log(userCredential.user.email)
+      signUpEmail.value = '';
+      signUpPass1.value = '';
+      signUpPass2.value = '';
+      const successMessage = document.querySelector('.success-signup');
+      successMessage.innerText = `Successfully signed up with email ${userCredential.user.email}!`
+      console.log('Signed up! Email: ' + userCredential.user.email)
+    })
+    .catch(error => {
+      console.log(error.code)
+      console.log(error.message)
+    })
+  }
+
+  function validateEmail (email) {
+    const emailValidationRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/
+    return emailValidationRegex.test(email)
+  }
+
+  function showSignup () {
+    const upModal = document.getElementById('sign-up-modal')
+    welcomeScreen.style.display = 'none'
+    upModal.style.display = 'flex'
+  }
+
+  function showErrorsInInputSignUp () {
+    errorText[0].style.display = 'none'
+    errorTextPass1[0].style.display = 'none'
+    errorTextPass2[0].style.display = 'none'
+    if (validateEmail(signUpEmail.value) !== true) return errorText[0].style.display = 'flex';
+    if (signUpPass1.value.length < 6 || signUpPass2.value.length < 6) return errorTextPass1[0].style.display = 'flex';
+    if (signUpPass1.value !== signUpPass2.value) return errorTextPass2[0].style.display = 'flex';
+    return false
+  }
+
+  //Sign up implementation end
+/* --------------------------------------------------------------------------------------------------------- */
+  //Sign in implementation start
+
+  const loginBtn = document.getElementById('signin')
+  const loginBtnModal = document.getElementById('sign-in-btn')
+  const loginEmail = document.getElementById('email-input-in')
+  const loginPassword = document.getElementById('password-signin')
+  const errorTextLogin = document.querySelector('.invalid-email-login')
+  const errorTextPassLogin = document.querySelector('.invalid-password-login')
+
+  loginBtn.addEventListener('click', showSignIn)
+
+  loginBtnModal.addEventListener('click', event => {
+    const showErrors = showErrorsInInputSignIn();
+    if (showErrors === false) {
+      signInUser(auth, loginEmail.value, loginPassword.value)
+    }
+  })
+
+  loginEmail.addEventListener('keydown', (key) => {
+    if (key.key !== 'Enter') return;
+
+  })
+
+  function signInUser (auth, email, password) {
+    signInWithEmailAndPassword(auth, email, password)
+    .then(userCredential => {
+      loginEmail.value = ''
+      loginPassword.value = ''
+      // const user = userCredential.user
+      window.location.href = 'main-chat/index.html'
+      // console.log(user)
+    })
+    .catch (error => {
+      console.log(error.code)
+      console.log(error.message)
+    })
+  }
+
+  function showSignIn () {
+    const welcomeScreen = document.getElementById('welcome-screen')
+    const inModal = document.getElementById('sign-in-modal')
+    welcomeScreen.style.display = 'none'
+    inModal.style.display = 'flex'
+  }
+
+  function showErrorsInInputSignIn () {
+    errorTextLogin.style.display = 'none'
+    errorTextPassLogin.style.display = 'none'
+    if (validateEmail(loginEmail.value) !== true) return errorTextLogin.style.display = 'flex';
+    if (!loginPassword.value) return errorTextPassLogin.style.display = 'flex';
+    return false
+  }
+
+  //Sign in implementation end
   }
 })
 
-registerBtnModal.addEventListener('click', (event) => {
-  // showErrorsInInput()
-  if (showErrorsInInput() === false) {
-    signUpUser(auth, signUpEmail.value, signUpPass1.value)
-  }
-})
-
-function signUpUser (auth, email, password) {
-  createUserWithEmailAndPassword(auth, email, password)
-  .then((userCredential) => {
-    // console.log(userCredential.user.email)
-    signUpEmail.value = '';
-    signUpPass1.value = '';
-    signUpPass2.value = '';
-    const successMessage = document.querySelector('.success-signup');
-    successMessage.innerText = `Successfully signed up with email ${userCredential.user.email}!`
-    console.log('Signed up! Email: ' + userCredential.user.email)
-  })
-  .catch(error => {
-    console.log(error.code)
-    console.log(error.message)
-  })
-}
-
-function validateEmail (email) {
-  const emailValidationRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/
-  return emailValidationRegex.test(email)
-}
-
-function showSignIn () {
-  const welcomeScreen = document.getElementById('welcome-screen')
-  const inModal = document.getElementById('sign-in-modal')
-  welcomeScreen.style.display = 'none'
-  inModal.style.display = 'flex'
-}
-
-function showSignup () {
-  const welcomeScreen = document.getElementById('welcome-screen')
-  const upModal = document.getElementById('sign-up-modal')
-  welcomeScreen.style.display = 'none'
-  upModal.style.display = 'flex'
-}
-
-function showErrorsInInput () {
-  errorText[0].style.display = 'none'
-  errorTextPass1[0].style.display = 'none'
-  errorTextPass2[0].style.display = 'none'
-  if (validateEmail(signUpEmail.value) !== true) return errorText[0].style.display = 'flex';
-  if (signUpPass1.value.length < 6 || signUpPass2.value.length < 6) return errorTextPass1[0].style.display = 'flex';
-  if (signUpPass1.value !== signUpPass2.value) return errorTextPass2[0].style.display = 'flex';
-  return false
-}
