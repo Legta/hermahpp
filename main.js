@@ -36,14 +36,9 @@ auth.onAuthStateChanged( async user => { //check if user is logged in on load
       loadingScreen.innerHTML = `<p>Logged in as ${user.email}!<br>Email has not been verified</p>
       <button id="logoutbtn" type="button">Log out</button>`
     } else if (user.emailVerified) {
-      loadingScreen.innerHTML = `<p>Logged in as ${user.email}!<br>Yippee! your email is verified</p>
-      <button id="logoutbtn" type="button">Log out</button>`
+      loadingScreen.innerHTML = `<p>Logged in as ${user.email}!<br>Redirecting to the chat...</p>`
       redirectUser()
     }
-    const signoutBtn = document.getElementById('logoutbtn')
-    signoutBtn.addEventListener('click', event => { //REMEMBER TO REMOVE THIS BUTTON
-      signOut(auth).then(() => console.log('Sign out succesful')).catch(error => console.log(error))
-    })
   } 
   else {
 
