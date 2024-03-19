@@ -46,6 +46,7 @@ auth.onAuthStateChanged( async user => { //check if user is logged in on load
     })
   } 
   else {
+
     //Sign up flow implementation start
     const welcomeScreen = document.getElementById('welcome-screen')
     const registerBtn = document.getElementById('signup')
@@ -132,7 +133,7 @@ auth.onAuthStateChanged( async user => { //check if user is logged in on load
   loginBtn.addEventListener('click', showSignIn)
 
   loginBtnModal.addEventListener('click', event => {
-    const showErrors = showErrorsInInputSignIn();
+    const showErrors = areInputsCorrectSignIn();
     if (showErrors === false) {
       signInUser(auth, loginEmail.value, loginPassword.value)
     }
@@ -140,8 +141,7 @@ auth.onAuthStateChanged( async user => { //check if user is logged in on load
 
   document.getElementById('email-and-pass-in').addEventListener('keydown', key => {
     if (key.key !== 'Enter') return;
-    const showErrors = showErrorsInInputSignIn();
-    if (showErrors === false) {
+    if (areInputsCorrectSignIn() === true) {
       signInUser(auth, loginEmail.value, loginPassword.value)
     }
   })
@@ -149,13 +149,15 @@ auth.onAuthStateChanged( async user => { //check if user is logged in on load
   function signInUser (auth, email, password) {
     signInWithEmailAndPassword(auth, email, password)
     .then(userCredential => {
-      loginEmail.value = ''
-      loginPassword.value = ''
-      if (userCredential.emailVerified) redirectUser()
-      else {
-    errorTextPassLogin.style.display = 'flex'
-        errorTextPassLogin.innerText = 'You need to verify your email address!'
-      }
+      if (userCredential.user.emailVerified) {
+        errorTextPassLogin.style.display = 'flex'
+        errorTextPassLogin.style.color = 'green';
+        errorTextPassLogin.innerText = 'Logged in successfully! Redirecting...'
+        redirectUser()
+      } else {
+          errorTextPassLogin.style.display = 'flex'
+          errorTextPassLogin.innerText = 'Logged in correctly. You need to verify your email address!'
+        }
       // const user = userCredential.user
       // console.log(user)
     })
@@ -176,13 +178,13 @@ auth.onAuthStateChanged( async user => { //check if user is logged in on load
     inModal.style.display = 'flex'
   }
 
-  function showErrorsInInputSignIn () {
-    errorTextPassLogin.innerText = 'Enter a password'
+  function areInputsCorrectSignIn () {
     errorTextLogin.style.display = 'none'
     errorTextPassLogin.style.display = 'none'
+    errorTextPassLogin.innerText = 'Enter a password'
     if (validateEmail(loginEmail.value) !== true) return errorTextLogin.style.display = 'flex';
     if (!loginPassword.value) return errorTextPassLogin.style.display = 'flex';
-    return false
+    return true
   }
 
   //Sign in implementation end

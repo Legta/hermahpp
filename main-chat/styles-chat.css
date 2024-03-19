@@ -13,7 +13,40 @@ body {
     width: 100vw;
     height: 100vh;
     display: flex;
+    flex-direction: column;
 }
+
+#status-bar {
+    position: fixed;
+    width: 100vw;
+    height: 6vh;
+    max-height: 6vh;
+    /* background: red; */
+    margin-bottom: 15px;
+}
+
+#user-data {
+    display: flex;
+    gap: 10px;
+    flex-direction: row-reverse;
+    background: gray;
+    text-align: center;
+    border-bottom: solid;
+    padding-right: 20px;
+}
+
+#logout-btn {
+    text-decoration: none; color: black;
+}
+
+#logout-btn:hover {
+    cursor: pointer;
+}
+
+#logout-btn:active {
+    color:  rgb(208, 208, 208);
+}
+
 
 #messages-column {
     display:flex;
@@ -21,6 +54,8 @@ body {
     align-items: flex-start;
     width: 90vw;
     margin: 0 auto;
+    margin-top: 7.5vh;
+    padding-bottom: 7vh;
 }
 
 #message-elements {
