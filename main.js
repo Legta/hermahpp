@@ -63,10 +63,10 @@ auth.onAuthStateChanged( async user => { //check if user is logged in on load
 
   registerBtn.addEventListener('click', showSignup)
 
-  document.getElementById('email-and-pass').addEventListener('keydown', async event => {
+  document.getElementById('email-and-pass').addEventListener('keydown', event => {
     if (event.key !== 'Enter') return;
     if (showErrorsInInputSignUp() === false) {
-      await signUpUser(auth, signUpEmail.value, signUpPass1.value)
+      signUpUser(auth, signUpEmail.value, signUpPass1.value)
     }
   })
 
@@ -133,8 +133,7 @@ auth.onAuthStateChanged( async user => { //check if user is logged in on load
   loginBtn.addEventListener('click', showSignIn)
 
   loginBtnModal.addEventListener('click', event => {
-    const showErrors = areInputsCorrectSignIn();
-    if (showErrors === false) {
+    if (areInputsCorrectSignIn() === true) {
       signInUser(auth, loginEmail.value, loginPassword.value)
     }
   })
