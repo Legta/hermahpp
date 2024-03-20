@@ -4,6 +4,7 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth, signOut } from "firebase/auth";
+import { getFirestore, addDoc, getDocs, collection, query, orderBy,  } from "firebase/firestore"
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -23,12 +24,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const auth = getAuth();
+const db = getFirestore(app)
 
 //Firebase initialization end
 
-
 //Check if user is logged in, if not, redirect to homepage
-auth.onAuthStateChanged(user => {
+auth.onAuthStateChanged(async user => {
     if (user) {
         if (user.emailVerified) {
             //Get elements from document
@@ -38,24 +39,34 @@ auth.onAuthStateChanged(user => {
             const userEmailElement = document.getElementById('user-email');
             const logoutBtn = document.getElementById('logout-btn');
 
+            const oldMessages = await readAllDB()
+            oldMessages ? oldMessages.forEach(el => messageColumn.innerHTML += el) : messageColumn.innerHTML = '';
+
             //Get localStorage if it exists and set the HTML content to it if it does
-            const previousMessages = localStorage.getItem('savedMessages') ? JSON.parse(localStorage.getItem('savedMessages')) : [];
-            previousMessages != []
-                ? previousMessages.forEach((el) => messageColumn.innerHTML += el)
-                : messageColumn.innerHTML = '';
+            // const previousMessages = localStorage.getItem('savedMessages') ? JSON.parse(localStorage.getItem('savedMessages')) : [];
+            // previousMessages != []
+            //     ? previousMessages.forEach((el) => messageColumn.innerHTML += el)
+            //     : messageColumn.innerHTML = '';
             window.onload = scroll(0, document.body.scrollHeight) //Scrolls to the very bottom on page load
 
             userEmailElement.innerText = `Logged in as ${user.email}`;
+
+            const ownMessages = document.querySelectorAll(`.${user.uid}`)
+            ownMessages.forEach(el => {
+                el.style.alignSelf = 'flex-end'; 
+                el.style.backgroundColor = 'lightblue';
+            })
+
 
             logoutBtn.addEventListener('click', event => {
                 signOut(auth)
                 return redirectUser()
             })
 
-            sendButton.addEventListener('click', submitMessage) //On click event of the send button, call submitMessage
+            sendButton.addEventListener('click', submitMessageText) //On click event of the send button, call submitMessage
 
             messageElement.addEventListener('keydown', (event) => { //If enter key is pressed while the input is focused, send the message
-                if (event.key === 'Enter') submitMessage()
+                if (event.key === 'Enter') submitMessageText()
             })
 
             const editButtonsParent = document.getElementById('messages-column'); //Get parent element of the buttons so I can have only one listener instead of one for each button
@@ -83,27 +94,58 @@ auth.onAuthStateChanged(user => {
                 }
             })
 
-
-
-            function submitMessage() { //Updates the content of the HTML with the text entered
+            async function readAllDB () {
+                try {
+                    const msgCollection = collection(db, 'messages')
+                    const orderQuery = query(msgCollection, orderBy('id'))
+                    const retrievedDataSnapshot = await getDocs(orderQuery)
+                    let oldMessagesArr = [];
+                    retrievedDataSnapshot.forEach(doc => oldMessagesArr.push(doc.data().HTMLcontent))
+                    return oldMessagesArr
+                } catch (error) {
+                    console.error(error)
+                }
+            }
+            
+            async function submitMessageText() { //Updates the content of the HTML with the text entered
                 if (!messageElement.value) return;
                 const messageID = Date.now();
                 const newMessageString = `
-    <div class="past-message" id="${messageID}">
-        <p class="small-text">Message ID: ${messageID}</p>
-        <p>${messageElement.value}</p>
-        <div class="hover-info">
-            <button class="small-text" id="message-edit-${messageID}">Edit</button>
-            <button class="small-text" id="message-delete-${messageID}">Delete</button>
-            <input class="hidden-input" type="text" id="edit-field-${messageID}" placeholder="Press enter to confirm edit" autocomplete="off">    
-        </div>
-    </div>
-    `;
-                messageColumn.innerHTML += newMessageString;
-                previousMessages.push(newMessageString)
+                <div class="past-message ${user.uid}" id="${messageID}">
+                <p class="small-text">Message ID: ${messageID}</p>
+                <p>${messageElement.value}</p>
+                <div class="hover-info">
+                <button class="small-text" id="message-edit-${messageID}">Edit</button>
+                <button class="small-text" id="message-delete-${messageID}">Delete</button>
+                <input class="hidden-input" type="text" id="edit-field-${messageID}" placeholder="Press enter to confirm edit" autocomplete="off">    
+                </div>
+                </div>
+                `;
+                const newMessageStringOwn = `
+                <div class="past-message ${user.uid}" id="${messageID}" style="align-self:flex-end; background-color:lightblue">
+                <p class="small-text">Message ID: ${messageID}</p>
+                <p>${messageElement.value}</p>
+                <div class="hover-info">
+                <button class="small-text" id="message-edit-${messageID}">Edit</button>
+                <button class="small-text" id="message-delete-${messageID}">Delete</button>
+                <input class="hidden-input" type="text" id="edit-field-${messageID}" placeholder="Press enter to confirm edit" autocomplete="off">    
+                </div>
+                </div>
+                `;
+                messageColumn.innerHTML += newMessageStringOwn;
+                // previousMessages.push(newMessageString)
+                addToDB({
+                    id: messageID,
+                    authorID: user.uid,
+                    authorEmail: user.email,
+                    authorDisplayName: user.displayName? user.displayName: '',
+                    type: 'text',
+                    HTMLcontent: newMessageString,
+                    content: messageElement.value
+                })
                 messageElement.value = '';
 
-                localStorage.setItem('savedMessages', JSON.stringify(previousMessages))
+                // localStorage.setItem('savedMessages', JSON.stringify(previousMessages))
 
                 scrollToBottom()
             }
@@ -111,15 +153,15 @@ auth.onAuthStateChanged(user => {
             function editMessage(messageID, newMessage) {
                 const selectedMessage = document.getElementById(`${messageID}`)
                 selectedMessage.innerHTML = `
-        <p class="small-text">Message ID: ${messageID}</p>
-        <p class="small-text">(Edited)</p>
-        <p>${newMessage}</p>
-        <div class="hover-info">
-            <button class="small-text" id="message-edit-${messageID}">Edit</button>
-            <button class="small-text" id="message-delete-${messageID}">Delete</button>
-            <input class="hidden-input" type="text" id="edit-field-${messageID}" placeholder="Press enter to confirm edit" autocomplete="off">    
-        </div>
-    `;
+                <p class="small-text">Message ID: ${messageID}</p>
+                <p class="small-text">(Edited)</p>
+                <p>${newMessage}</p>
+                <div class="hover-info">
+                <button class="small-text" id="message-edit-${messageID}">Edit</button>
+                <button class="small-text" id="message-delete-${messageID}">Delete</button>
+                <input class="hidden-input" type="text" id="edit-field-${messageID}" placeholder="Press enter to confirm edit" autocomplete="off">    
+                </div>
+                `;
 
                 replaceItemInLocalStorage(messageID, selectedMessage.innerHTML)
             }
@@ -136,33 +178,43 @@ auth.onAuthStateChanged(user => {
                 buttonEvent.target.id = buttonEvent.target.id.replace('close-edit', 'message-edit')
             }
 
-            function findLocalStorageItemIndex(storageArray, htmlID) {
-                const regex = new RegExp(htmlID)
-                return storageArray.findIndex((el) => el.match(regex))
-            }
+            // function findLocalStorageItemIndex(storageArray, htmlID) {
+            //     const regex = new RegExp(htmlID)
+            //     return storageArray.findIndex((el) => el.match(regex))
+            // }
 
-            function replaceItemInLocalStorage(messageID, newItem) {
-                const itemIndex = findLocalStorageItemIndex(previousMessages, messageID)
-                previousMessages[itemIndex] = `
-        <div class="past-message" id="${messageID}">
-            ${newItem}
-        </div>
-    `
-                localStorage.setItem('savedMessages', JSON.stringify(previousMessages))
-            }
+            // function replaceItemInLocalStorage(messageID, newItem) {
+            //     const itemIndex = findLocalStorageItemIndex(previousMessages, messageID)
+            //     previousMessages[itemIndex] = `
+            //     <div class="past-message" id="${messageID}">
+            //     ${newItem}
+            //     </div>
+            //     `
+            //     localStorage.setItem('savedMessages', JSON.stringify(previousMessages))
+            // }
 
-            function deleteMessage(messageID) {
-                const selectedMessage = document.getElementById(`${messageID}`)
-                previousMessages.splice(findLocalStorageItemIndex(previousMessages, messageID), 1)
-                localStorage.setItem('savedMessages', JSON.stringify(previousMessages))
-                return selectedMessage.remove()
-            }
+            // function deleteMessage(messageID) {
+            //     const selectedMessage = document.getElementById(`${messageID}`)
+            //     previousMessages.splice(findLocalStorageItemIndex(previousMessages, messageID), 1)
+            //     localStorage.setItem('savedMessages', JSON.stringify(previousMessages))
+            //     return selectedMessage.remove()
+            // }
 
             function scrollToBottom() {
                 // Use setTimeout to allow DOM updates before scrolling
                 setTimeout(() => {
                     window.scrollTo({ top: document.body.scrollHeight, left: 0, behavior: 'smooth' });
                 }, 0);
+            }
+
+            async function addToDB(data) {
+                const messagesCollection = collection(db, 'messages')
+                try {
+                    await addDoc(messagesCollection, data)
+                    console.log('Message ', data, ' added correctly')
+                } catch (error) {
+                    console.error('Error adding data: ', error)
+                }
             }
         }
         else {

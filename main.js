@@ -29,12 +29,12 @@ const auth = getAuth();
 const loadingScreen = document.getElementById('loading-screen');
 auth.onAuthStateChanged( async user => { //check if user is logged in on load
   if (user) {
-    // await console.log(user.getIdToken())
-    loadingScreen.innerHTML = `<p>Logged in as ${user.email}!</p>
-    <button id="logoutbtn" type="button">Log out</button>`;
+    loadingScreen.innerHTML = `<p>Logged in as ${user.email}!</p>`
     if (!user.emailVerified) {
       loadingScreen.innerHTML = `<p>Logged in as ${user.email}!<br>Email has not been verified</p>
       <button id="logoutbtn" type="button">Log out</button>`
+
+      document.getElementById('logoutbtn').addEventListener('click', event => signOut(auth))
     } else if (user.emailVerified) {
       loadingScreen.innerHTML = `<p>Logged in as ${user.email}!<br>Redirecting to the chat...</p>`
       redirectUser()
