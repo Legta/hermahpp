@@ -3,7 +3,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import {getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification} from 'firebase/auth';
+import {getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification, updateProfile} from 'firebase/auth';
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -52,26 +52,30 @@ auth.onAuthStateChanged( async user => { //check if user is logged in on load
     const errorText = document.querySelectorAll('.invalid-email')
     const errorTextPass1 = document.querySelectorAll('.invalid-password') 
     const errorTextPass2 = document.querySelectorAll('.invalid-password-match') 
+    const usernameInput = document.getElementById('username-input')
 
   loadingScreen.style.display ='none'
   welcomeScreen.style.display= 'flex'
 
   registerBtn.addEventListener('click', showSignup)
 
-  document.getElementById('email-and-pass').addEventListener('keydown', event => {
+  document.getElementById('email-and-pass').addEventListener('keydown', async event => {
     if (event.key !== 'Enter') return;
     if (showErrorsInInputSignUp() === false) {
-      signUpUser(auth, signUpEmail.value, signUpPass1.value)
+      await signUpUser(auth, signUpEmail.value, signUpPass1.value, usernameInput.value)
+      auth.onAuthStateChanged( async user => {
+        await updateProfile(user, {displayName: usernameInput.value});
+      })
     }
   })
 
   registerBtnModal.addEventListener('click', (event) => {
     if (showErrorsInInputSignUp() === false) {
-      signUpUser(auth, signUpEmail.value, signUpPass1.value)
+      signUpUser(auth, signUpEmail.value, signUpPass1.value, usernameInput.value)
     }
   })
 
-  async function signUpUser (auth, email, password) {
+  async function signUpUser (auth, email, password, username) {
     createUserWithEmailAndPassword(auth, email, password)
     .then(async (userCredential) => {
       signUpEmail.value = '';
@@ -80,8 +84,9 @@ auth.onAuthStateChanged( async user => { //check if user is logged in on load
       const successMessage = document.querySelector('.success-signup');
       successMessage.innerText = `Successfully signed up with email ${userCredential.user.email}!\nAn email has been sent to your address to verify it and complete the registration process`
       console.log('Signed up! Email: ' + userCredential.user.email)
-      auth.onAuthStateChanged(newUser => sendEmailVerification(newUser))
-      // redirectUser()
+      auth.onAuthStateChanged(async newUser => {
+        await sendEmailVerification(newUser)
+      })
     })
     .catch(error => {
       console.log(error.code)

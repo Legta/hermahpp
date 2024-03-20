@@ -3,8 +3,8 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getAuth, signOut } from "firebase/auth";
-import { getFirestore, addDoc, getDocs, collection, query, orderBy,  } from "firebase/firestore"
+import { getAuth, signOut, updateProfile } from "firebase/auth";
+import { getFirestore, addDoc, getDocs, collection, query, orderBy } from "firebase/firestore"
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -38,18 +38,14 @@ auth.onAuthStateChanged(async user => {
             const messageColumn = document.getElementById('messages-column');
             const userEmailElement = document.getElementById('user-email');
             const logoutBtn = document.getElementById('logout-btn');
+            const username = user.displayName;
 
             const oldMessages = await readAllDB()
             oldMessages ? oldMessages.forEach(el => messageColumn.innerHTML += el) : messageColumn.innerHTML = '';
 
-            //Get localStorage if it exists and set the HTML content to it if it does
-            // const previousMessages = localStorage.getItem('savedMessages') ? JSON.parse(localStorage.getItem('savedMessages')) : [];
-            // previousMessages != []
-            //     ? previousMessages.forEach((el) => messageColumn.innerHTML += el)
-            //     : messageColumn.innerHTML = '';
-            window.onload = scroll(0, document.body.scrollHeight) //Scrolls to the very bottom on page load
+            window.onload = scroll(0, document.body.scrollHeight) //Scrolls to the very bottom on page load   
 
-            userEmailElement.innerText = `Logged in as ${user.email}`;
+            userEmailElement.innerText = `Logged in as ${user.displayName}`;
 
             const ownMessages = document.querySelectorAll(`.${user.uid}`)
             ownMessages.forEach(el => {
@@ -112,7 +108,7 @@ auth.onAuthStateChanged(async user => {
                 const messageID = Date.now();
                 const newMessageString = `
                 <div class="past-message ${user.uid}" id="${messageID}">
-                <p class="small-text">Message ID: ${messageID}</p>
+                <p class="small-text">${username} dice:</p>
                 <p>${messageElement.value}</p>
                 <div class="hover-info">
                 <button class="small-text" id="message-edit-${messageID}">Edit</button>
@@ -123,7 +119,7 @@ auth.onAuthStateChanged(async user => {
                 `;
                 const newMessageStringOwn = `
                 <div class="past-message ${user.uid}" id="${messageID}" style="align-self:flex-end; background-color:lightblue">
-                <p class="small-text">Message ID: ${messageID}</p>
+                <p class="small-text">${username} dice:</p>
                 <p>${messageElement.value}</p>
                 <div class="hover-info">
                 <button class="small-text" id="message-edit-${messageID}">Edit</button>

@@ -26,13 +26,15 @@
         <div id="sign-up-modal">
             <h1>Sign up</h1>
             <div id="email-and-pass">
+                <p>Enter your username:</p>
+                <input id="username-input" type="text" required autocomplete="off">
                 <p>Enter your email address:</p>
                 <input type="email" id="email-input" placeholder="legta@hermahs.com" name="email-input" autocomplete="off" required>
                 <p class="invalid-email">Please enter a valid email address</p>
                 <p>Enter your password:</p>
-                <input type="password" id="password-input1">
+                <input type="password" id="password-input1" required>
                 <p>Confirm your password:</p>
-                <input type="password" id="password-input2">
+                <input type="password" id="password-input2" required>
                 <p class="invalid-password">Your password should be longer than 6 characters</p>
                 <p class="invalid-password-match">The passwords don't match</p>
                 <!-- <p><a href="./main-chat/index.html">main chat</a></p> -->
