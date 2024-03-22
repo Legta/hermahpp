@@ -31,7 +31,7 @@ auth.onAuthStateChanged( async user => { //check if user is logged in on load
   if (user) {
     loadingScreen.innerHTML = `<p>Logged in as ${user.email}!</p>`
     if (!user.emailVerified) {
-      loadingScreen.innerHTML = `<p>Logged in as ${user.email}!<br>Email has not been verified</p>
+      loadingScreen.innerHTML = `<p>Logged in as ${user.email}, ${user.displayName}!<br>Email has not been verified</p>
       <button id="logoutbtn" type="button">Log out</button>`
 
       document.getElementById('logoutbtn').addEventListener('click', event => signOut(auth))
@@ -62,9 +62,9 @@ auth.onAuthStateChanged( async user => { //check if user is logged in on load
   document.getElementById('email-and-pass').addEventListener('keydown', async event => {
     if (event.key !== 'Enter') return;
     if (showErrorsInInputSignUp() === false) {
-      await signUpUser(auth, signUpEmail.value, signUpPass1.value, usernameInput.value)
-      auth.onAuthStateChanged( async user => {
-        await updateProfile(user, {displayName: usernameInput.value});
+      await signUpUser(auth, signUpEmail.value, signUpPass1.value);
+      auth.onAuthStateChanged( async (userNew) => {
+        await updateProfile(userNew, {displayName: usernameInput.value});
       })
     }
   })
@@ -75,7 +75,7 @@ auth.onAuthStateChanged( async user => { //check if user is logged in on load
     }
   })
 
-  async function signUpUser (auth, email, password, username) {
+  async function signUpUser (auth, email, password) {
     createUserWithEmailAndPassword(auth, email, password)
     .then(async (userCredential) => {
       signUpEmail.value = '';
@@ -87,6 +87,7 @@ auth.onAuthStateChanged( async user => { //check if user is logged in on load
       auth.onAuthStateChanged(async newUser => {
         await sendEmailVerification(newUser)
       })
+      // return userCredential.user
     })
     .catch(error => {
       console.log(error.code)

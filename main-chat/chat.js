@@ -4,7 +4,7 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth, signOut, updateProfile } from "firebase/auth";
-import { getFirestore, addDoc, getDocs, collection, query, orderBy } from "firebase/firestore"
+import { getFirestore, addDoc, getDocs, collection, query, orderBy, onSnapshot } from "firebase/firestore"
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -40,19 +40,41 @@ auth.onAuthStateChanged(async user => {
             const logoutBtn = document.getElementById('logout-btn');
             const username = user.displayName;
 
-            const oldMessages = await readAllDB()
-            oldMessages ? oldMessages.forEach(el => messageColumn.innerHTML += el) : messageColumn.innerHTML = '';
+
+            const orderQuery = query(collection(db, 'messages'), orderBy('id'))
+            let firstFetch = true;
+            const fetcher = onSnapshot(orderQuery, (snapshot) => {
+                const docsArray = snapshot.docs
+                if (firstFetch === true) {
+                    try {
+                        docsArray.forEach(el => messageColumn.innerHTML += el.data().HTMLcontent);
+                        ownMessageDisplay()
+                        scrollToBottom()
+                    } catch (error) {
+                        console.error(error)
+                    } finally {
+                        firstFetch = false;
+                    }
+                } else {
+                    try {
+                        const changes = snapshot.docChanges()
+                        // const latestMessage = changes[changes.length -1]
+                        const latestMessage = docsArray[docsArray.length - 1]
+                        console.log(latestMessage)
+                        messageColumn.innerHTML += latestMessage.data().HTMLcontent
+                        ownMessageDisplay()
+                        scrollToBottom()
+                    }
+                    catch (error) {
+                        console.error(error)
+                    } 
+                }
+            })
+
 
             window.onload = scroll(0, document.body.scrollHeight) //Scrolls to the very bottom on page load   
 
             userEmailElement.innerText = `Logged in as ${user.displayName}`;
-
-            const ownMessages = document.querySelectorAll(`.${user.uid}`)
-            ownMessages.forEach(el => {
-                el.style.alignSelf = 'flex-end'; 
-                el.style.backgroundColor = 'lightblue';
-            })
-
 
             logoutBtn.addEventListener('click', event => {
                 signOut(auth)
@@ -90,19 +112,6 @@ auth.onAuthStateChanged(async user => {
                 }
             })
 
-            async function readAllDB () {
-                try {
-                    const msgCollection = collection(db, 'messages')
-                    const orderQuery = query(msgCollection, orderBy('id'))
-                    const retrievedDataSnapshot = await getDocs(orderQuery)
-                    let oldMessagesArr = [];
-                    retrievedDataSnapshot.forEach(doc => oldMessagesArr.push(doc.data().HTMLcontent))
-                    return oldMessagesArr
-                } catch (error) {
-                    console.error(error)
-                }
-            }
-            
             async function submitMessageText() { //Updates the content of the HTML with the text entered
                 if (!messageElement.value) return;
                 const messageID = Date.now();
@@ -117,33 +126,28 @@ auth.onAuthStateChanged(async user => {
                 </div>
                 </div>
                 `;
-                const newMessageStringOwn = `
-                <div class="past-message ${user.uid}" id="${messageID}" style="align-self:flex-end; background-color:lightblue">
-                <p class="small-text">${username} dice:</p>
-                <p>${messageElement.value}</p>
-                <div class="hover-info">
-                <button class="small-text" id="message-edit-${messageID}">Edit</button>
-                <button class="small-text" id="message-delete-${messageID}">Delete</button>
-                <input class="hidden-input" type="text" id="edit-field-${messageID}" placeholder="Press enter to confirm edit" autocomplete="off">    
-                </div>
-                </div>
-                `;
-                messageColumn.innerHTML += newMessageStringOwn;
-                // previousMessages.push(newMessageString)
+
                 addToDB({
                     id: messageID,
                     authorID: user.uid,
                     authorEmail: user.email,
-                    authorDisplayName: user.displayName? user.displayName: '',
+                    authorDisplayName: user.displayName ? user.displayName : '',
                     type: 'text',
                     HTMLcontent: newMessageString,
                     content: messageElement.value
                 })
                 messageElement.value = '';
 
-                // localStorage.setItem('savedMessages', JSON.stringify(previousMessages))
-
                 scrollToBottom()
+
+            }
+
+            function ownMessageDisplay () {
+                const ownMessages = document.querySelectorAll(`.${CSS.escape(user.uid)}`)
+                ownMessages.forEach(el => {
+                    el.style.alignSelf = 'flex-end'
+                    el.style.backgroundColor = 'lightblue'
+                })
             }
 
             function editMessage(messageID, newMessage) {
@@ -174,28 +178,6 @@ auth.onAuthStateChanged(async user => {
                 buttonEvent.target.id = buttonEvent.target.id.replace('close-edit', 'message-edit')
             }
 
-            // function findLocalStorageItemIndex(storageArray, htmlID) {
-            //     const regex = new RegExp(htmlID)
-            //     return storageArray.findIndex((el) => el.match(regex))
-            // }
-
-            // function replaceItemInLocalStorage(messageID, newItem) {
-            //     const itemIndex = findLocalStorageItemIndex(previousMessages, messageID)
-            //     previousMessages[itemIndex] = `
-            //     <div class="past-message" id="${messageID}">
-            //     ${newItem}
-            //     </div>
-            //     `
-            //     localStorage.setItem('savedMessages', JSON.stringify(previousMessages))
-            // }
-
-            // function deleteMessage(messageID) {
-            //     const selectedMessage = document.getElementById(`${messageID}`)
-            //     previousMessages.splice(findLocalStorageItemIndex(previousMessages, messageID), 1)
-            //     localStorage.setItem('savedMessages', JSON.stringify(previousMessages))
-            //     return selectedMessage.remove()
-            // }
-
             function scrollToBottom() {
                 // Use setTimeout to allow DOM updates before scrolling
                 setTimeout(() => {
@@ -207,7 +189,7 @@ auth.onAuthStateChanged(async user => {
                 const messagesCollection = collection(db, 'messages')
                 try {
                     await addDoc(messagesCollection, data)
-                    console.log('Message ', data, ' added correctly')
+                    // console.log('Message ', data, ' added correctly')
                 } catch (error) {
                     console.error('Error adding data: ', error)
                 }
