@@ -3,7 +3,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import {getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification, updateProfile} from 'firebase/auth';
+import {getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification, updateProfile, sendPasswordResetEmail, confirmPasswordReset} from 'firebase/auth';
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -126,12 +126,30 @@ auth.onAuthStateChanged( async user => { //check if user is logged in on load
 
   const loginBtn = document.getElementById('signin')
   const loginBtnModal = document.getElementById('sign-in-btn')
+  const loginModal = document.getElementById('sign-in-modal')
   const loginEmail = document.getElementById('email-input-in')
   const loginPassword = document.getElementById('password-signin')
   const errorTextLogin = document.querySelector('.invalid-email-login')
   const errorTextPassLogin = document.querySelector('.invalid-password-login')
+  const forgottenPassText = document.querySelector('#email-and-pass-in a')
+  const forgottenPasswordDiv = document.getElementById('forgottenpass')
+  const forgottenPasswordButton = document.getElementById('submit-email-btn')
+  const forgottenPasswordEmail = document.getElementById('forgottenemail')
 
   loginBtn.addEventListener('click', showSignIn)
+
+  forgottenPassText.addEventListener('click', (event) => {
+    loginModal.style.display = 'none'
+    forgottenPasswordDiv.style.display = 'block'
+  })
+
+  forgottenPasswordButton.addEventListener('click', event => {
+    sendPasswordResetEmail(auth, forgottenPasswordEmail.value)
+    forgottenPasswordDiv.innerHTML = `
+    <p style="color:green">An email has been sent to ${forgottenPasswordEmail.value} with a link to reset your password. Once you have done so just refresh the page and try your new password!</p>`
+  })
+
+
 
   loginBtnModal.addEventListener('click', event => {
     if (areInputsCorrectSignIn() === true) {

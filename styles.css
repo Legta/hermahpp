@@ -142,3 +142,20 @@ body {
     color: red;
     font-size: 0.7em;
 }
+
+.forgotpass {
+    font-size: 0.6em;
+}
+
+#forgottenpass {
+    position: fixed;
+    display: none;
+    background: lightgray;
+    border-radius: 20px;
+    padding:10px;
+    left: 50%;
+    transform: translateX(-50%);
+    align-self: center;
+    z-index: 3;
+    gap:15px;
+}
