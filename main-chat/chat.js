@@ -40,6 +40,9 @@ auth.onAuthStateChanged(async user => {
             const logoutBtn = document.getElementById('logout-btn');
             const username = user.displayName;
 
+            const notificationSound = new Audio('../assets/audio/notification.wav')
+            notificationSound.volume = 0.3;
+
 
             const orderQuery = query(collection(db, 'messages'), orderBy('id'), limitToLast(25))
             let firstFetch = true;
@@ -49,7 +52,6 @@ auth.onAuthStateChanged(async user => {
                 if (firstFetch === true) {
                     try {
                         delimiterMessage = snapshot.docs[0]
-                        // getCountFromServer(collection(db, 'messages')).then((snapshot) => console.log('First fetch count of messages: ' + snapshot.data().count))
                         docsArray.forEach(el => messageColumn.innerHTML += el.data().HTMLcontent);
                         ownMessageDisplay()
                         scrollToBottom()
@@ -65,12 +67,11 @@ auth.onAuthStateChanged(async user => {
                             messageColumn.innerHTML += snapshot.docs[0].data().HTMLcontent
                             ownMessageDisplay()
                             scrollToBottom()
+                            if (!document.hasFocus()) {
+                                notificationSound.play()
+                            }
                             newMessageFetcher()
                         });
-
-                        // setTimeout(() => {
-                        //     getCountFromServer(collection(db, 'messages')).then((snapshot) => console.log('Message sent count of messages: ' + snapshot.data().count))
-                        // }, 600)
                     }
                     catch (error) {
                         console.error(error)
@@ -96,17 +97,20 @@ auth.onAuthStateChanged(async user => {
             const loadNewMessagesAtTop = 
                 throttle((delimited = delimiterMessage) => { //calls the throttle function with the actual intended code of the function as the first parameter and the time to wait in ms as the second paramater
                     const infiniteLoadQuery = query(collection(db, 'messages'), orderBy('id', 'asc'), limitToLast(25), endBefore(delimited))
-                    console.log(delimited.data().content)
                     messageColumn.innerHTML = `<p id="loading-text-scroll" style="align-self:center;">Loading...</p>` + messageColumn.innerHTML
                     getDocs(infiniteLoadQuery).then((snapshot) => {
-                        document.getElementById('loading-text-scroll').remove()
-                        snapshot.docs.reverse().forEach((el) => {
-                            messageColumn.innerHTML = el.data().HTMLcontent + messageColumn.innerHTML
-                        })
-                        ownMessageDisplay()
-                        delimiterMessage = snapshot.docs[0]
+                        try {
+                            document.getElementById('loading-text-scroll').remove()
+                            snapshot.docs.reverse().forEach((el) => {
+                                messageColumn.innerHTML = el.data().HTMLcontent + messageColumn.innerHTML
+                            })
+                            ownMessageDisplay()
+                            delimiterMessage = snapshot.docs[0]
+                        } catch (error) {
+                            console.error(error)
+                        }
                     })
-                }, 5000); 
+                }, 2500); 
 
             // -------------------------------------
 
@@ -235,7 +239,6 @@ auth.onAuthStateChanged(async user => {
                 const messagesCollection = collection(db, 'messages')
                 try {
                     await addDoc(messagesCollection, data)
-                    // console.log('Message ', data, ' added correctly')
                 } catch (error) {
                     console.error('Error adding data: ', error)
                 }
