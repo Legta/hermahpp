@@ -4,7 +4,7 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth, signOut, updateProfile } from "firebase/auth";
-import { getFirestore, addDoc, getDocs, collection, query, orderBy, onSnapshot } from "firebase/firestore"
+import { getFirestore, addDoc, getDocs, collection, query, orderBy, onSnapshot, limitToLast, endBefore } from "firebase/firestore"
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -41,12 +41,15 @@ auth.onAuthStateChanged(async user => {
             const username = user.displayName;
 
 
-            const orderQuery = query(collection(db, 'messages'), orderBy('id'))
+            const orderQuery = query(collection(db, 'messages'), orderBy('id'), limitToLast(25))
             let firstFetch = true;
-            const fetcher = onSnapshot(orderQuery, (snapshot) => {
+            let delimiterMessage = null
+            const onStartupFetcher = onSnapshot(orderQuery, (snapshot) => {
                 const docsArray = snapshot.docs
                 if (firstFetch === true) {
                     try {
+                        delimiterMessage = snapshot.docs[0]
+                        // getCountFromServer(collection(db, 'messages')).then((snapshot) => console.log('First fetch count of messages: ' + snapshot.data().count))
                         docsArray.forEach(el => messageColumn.innerHTML += el.data().HTMLcontent);
                         ownMessageDisplay()
                         scrollToBottom()
@@ -57,20 +60,63 @@ auth.onAuthStateChanged(async user => {
                     }
                 } else {
                     try {
-                        const changes = snapshot.docChanges()
-                        // const latestMessage = changes[changes.length -1]
-                        const latestMessage = docsArray[docsArray.length - 1]
-                        console.log(latestMessage)
-                        messageColumn.innerHTML += latestMessage.data().HTMLcontent
-                        ownMessageDisplay()
-                        scrollToBottom()
+                        const newMsgQuery = query(collection(db, 'messages'), orderBy('id'), limitToLast(1))
+                        const newMessageFetcher = onSnapshot(newMsgQuery, (snapshot) => {
+                            messageColumn.innerHTML += snapshot.docs[0].data().HTMLcontent
+                            ownMessageDisplay()
+                            scrollToBottom()
+                            newMessageFetcher()
+                        });
+
+                        // setTimeout(() => {
+                        //     getCountFromServer(collection(db, 'messages')).then((snapshot) => console.log('Message sent count of messages: ' + snapshot.data().count))
+                        // }, 600)
                     }
                     catch (error) {
                         console.error(error)
-                    } 
+                    }
                 }
             })
 
+            //Functions for scrolling and debounce
+
+            const throttle = (callback, wait) => { //This function prevents whatever function provided to it as an argument from running immediately after, instead only running it if the timer is null, which it only is after the previous settimeout has ended. For more info look up throttling on Javascript
+                let timeoutId = null;
+                return (...args) => {
+                    if (timeoutId === null) {
+                        callback(...args)
+                        clearTimeout(timeoutId);
+                        timeoutId = setTimeout(() => {
+                            timeoutId = null
+                        }, wait);
+                    }
+                };
+            }
+
+            const loadNewMessagesAtTop = 
+                throttle((delimited = delimiterMessage) => { //calls the throttle function with the actual intended code of the function as the first parameter and the time to wait in ms as the second paramater
+                    const infiniteLoadQuery = query(collection(db, 'messages'), orderBy('id', 'asc'), limitToLast(25), endBefore(delimited))
+                    console.log(delimited.data().content)
+                    messageColumn.innerHTML = `<p id="loading-text-scroll" style="align-self:center;">Loading...</p>` + messageColumn.innerHTML
+                    getDocs(infiniteLoadQuery).then((snapshot) => {
+                        document.getElementById('loading-text-scroll').remove()
+                        snapshot.docs.reverse().forEach((el) => {
+                            messageColumn.innerHTML = el.data().HTMLcontent + messageColumn.innerHTML
+                        })
+                        ownMessageDisplay()
+                        delimiterMessage = snapshot.docs[0]
+                    })
+                }, 5000); 
+
+            // -------------------------------------
+
+            window.addEventListener('scroll', (__event) => {
+                if (window.scrollY == 0) {
+                    loadNewMessagesAtTop(delimiterMessage)
+                }
+
+
+            })
 
             window.onload = scroll(0, document.body.scrollHeight) //Scrolls to the very bottom on page load   
 
@@ -142,7 +188,7 @@ auth.onAuthStateChanged(async user => {
 
             }
 
-            function ownMessageDisplay () {
+            function ownMessageDisplay() {
                 const ownMessages = document.querySelectorAll(`.${CSS.escape(user.uid)}`)
                 ownMessages.forEach(el => {
                     el.style.alignSelf = 'flex-end'
