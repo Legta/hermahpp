@@ -68,6 +68,7 @@ auth.onAuthStateChanged(async user => {
                             ownMessageDisplay()
                             scrollToBottom()
                             if (!document.hasFocus()) {
+                                document.title = '(*) Hermahs App'
                                 notificationSound.play()
                             }
                             newMessageFetcher()
@@ -78,6 +79,10 @@ auth.onAuthStateChanged(async user => {
                     }
                 }
             })
+
+            window.onfocus = () => {
+                if (document.title !== 'Hermahs App') document.title = 'Hermahs App'
+            }
 
             //Functions for scrolling and debounce
 
@@ -187,9 +192,7 @@ auth.onAuthStateChanged(async user => {
                     content: messageElement.value
                 })
                 messageElement.value = '';
-
                 scrollToBottom()
-
             }
 
             function ownMessageDisplay() {
