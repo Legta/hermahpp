@@ -4,7 +4,7 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth, signOut } from "firebase/auth";
-import { getFirestore, addDoc, getDocs, collection, query, orderBy, onSnapshot, limitToLast, endBefore, where, doc, updateDoc, serverTimestamp } from "firebase/firestore"
+import { getFirestore, addDoc, getDocs, collection, query, orderBy, onSnapshot, limitToLast, endBefore, where, doc, updateDoc, serverTimestamp, deleteDoc } from "firebase/firestore"
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -47,6 +47,7 @@ auth.onAuthStateChanged(async user => {
             const orderQuery = query(collection(db, 'messages'), orderBy('id'), limitToLast(25))
             let firstFetch = true;
             let delimiterMessage = null;
+            let messageJustDeleted = false;
             const onStartupFetcher = onSnapshot(orderQuery, (snapshot) => {
                 const docsArray = snapshot.docs
                 if (firstFetch === true) {
@@ -64,10 +65,12 @@ auth.onAuthStateChanged(async user => {
                     try {
                         const newMsgQuery = query(collection(db, 'messages'), orderBy('id'), limitToLast(1))
                         const newMessageFetcher = onSnapshot(newMsgQuery, (snapshotNewFetch) => {
+                            // if (messageJustDeleted) return newMessageFetcher();
                             if (snapshotNewFetch.docs[0].data().edited === true) {
                                 const msgBeingEditedId = snapshotNewFetch.docs[0].data().id;
                                 const msgBeingEdited = document.getElementById(msgBeingEditedId)
                                 msgBeingEdited.children[1].innerText = snapshotNewFetch.docs[0].data().content
+                                messageJustDeleted = false
                                 return newMessageFetcher()
                             }
                             messageColumn.innerHTML += snapshotNewFetch.docs[0].data().HTMLcontent
@@ -77,6 +80,7 @@ auth.onAuthStateChanged(async user => {
                                 document.title = '(*) Hermahs App'
                                 notificationSound.play()
                             }
+                            messageJustDeleted = false
                             newMessageFetcher()
                         });
                     }
@@ -202,7 +206,8 @@ auth.onAuthStateChanged(async user => {
                     type: 'text',
                     HTMLcontent: newMessageString,
                     content: messageElement.value,
-                    edited: false
+                    edited: false,
+                    previousContent: '',
                 })
                 messageElement.value = '';
                 scrollToBottom()
@@ -230,6 +235,7 @@ auth.onAuthStateChanged(async user => {
                 let messageDocID = '';
                 const editQuery = query(collection(db, 'messages'), where('id', '==', parseInt(messageID)))
                 getDocs(editQuery).then((snapshot) => {
+                    const previousMsgContent = snapshot.docs[0].data().content
                     messageDocID = snapshot.docs[0].id
                     const retrievedDocRef = doc(collection(db, 'messages'), messageDocID)
                     updateDoc(retrievedDocRef, {
@@ -245,9 +251,23 @@ auth.onAuthStateChanged(async user => {
                 </div>
                     `,
                         content: newMessage,
-                        edited: true
+                        edited: true,
+                        previousContent: previousMsgContent
                     })
                     console.log('Updated message')
+                })
+            }
+
+            function deleteMessage (messageID) {
+                let messageDocID = '';
+                const deleteQuery = query(collection(db, 'messages'), where('id', '==', parseInt(messageID)))
+                getDocs(deleteQuery).then((snapshot) => {
+                    messageDocID = snapshot.docs[0].id
+                    const retrievedDocRef = doc(collection(db, 'messages'), messageDocID)
+                    deleteDoc(retrievedDocRef)
+                    console.log('Deleted message')
+                    document.getElementById(messageID).remove()
+                    messageJustDeleted = true
                 })
             }
 
