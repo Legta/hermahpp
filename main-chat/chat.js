@@ -65,7 +65,10 @@ auth.onAuthStateChanged(async user => {
                     try {
                         const newMsgQuery = query(collection(db, 'messages'), orderBy('id'), limitToLast(1))
                         const newMessageFetcher = onSnapshot(newMsgQuery, (snapshotNewFetch) => {
-                            // if (messageJustDeleted) return newMessageFetcher();
+                            if (messageJustDeleted) {
+                                messageJustDeleted = false
+                                return newMessageFetcher()
+                            };
                             if (snapshotNewFetch.docs[0].data().edited === true) {
                                 const msgBeingEditedId = snapshotNewFetch.docs[0].data().id;
                                 const msgBeingEdited = document.getElementById(msgBeingEditedId)
