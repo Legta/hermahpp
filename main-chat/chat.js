@@ -46,10 +46,12 @@ auth.onAuthStateChanged(async user => {
 
             const orderQuery = query(collection(db, 'messages'), orderBy('id'), limitToLast(25))
             let firstFetch = true;
+            let delimiterMessage = null;
             const onStartupFetcher = onSnapshot(orderQuery, (snapshot) => {
                 const docsArray = snapshot.docs
                 if (firstFetch === true) {
                     try {
+                        delimiterMessage = snapshot.docs[0]
                         docsArray.forEach(el => messageColumn.innerHTML += el.data().HTMLcontent);
                         ownMessageDisplay()
                         scrollToBottom()
@@ -63,7 +65,9 @@ auth.onAuthStateChanged(async user => {
                         const newMsgQuery = query(collection(db, 'messages'), orderBy('id'), limitToLast(1))
                         const newMessageFetcher = onSnapshot(newMsgQuery, (snapshotNewFetch) => {
                             if (snapshotNewFetch.docs[0].data().edited === true) {
-                                
+                                const msgBeingEditedId = snapshotNewFetch.docs[0].data().id;
+                                const msgBeingEdited = document.getElementById(msgBeingEditedId)
+                                msgBeingEdited.children[1].innerText = snapshotNewFetch.docs[0].data().content
                                 return newMessageFetcher()
                             }
                             messageColumn.innerHTML += snapshotNewFetch.docs[0].data().HTMLcontent
@@ -167,6 +171,11 @@ auth.onAuthStateChanged(async user => {
                 if (event.key === 'Enter' && event.target.id.startsWith('edit-field')) {
                     const selectedMessageID = event.target.id.slice(11)
                     editMessage(selectedMessageID, event.target.value)
+                    const newMessageInput = document.getElementById(`edit-field-${selectedMessageID}`)
+                    newMessageInput.style.display = 'none';
+                    const closeButton = document.getElementById(`close-edit-${selectedMessageID}`)
+                    closeButton.id = event.target.id.replace('close-edit', 'message-edit')
+                    closeButton.innerText = 'Edit'
                 }
             })
 
@@ -176,7 +185,7 @@ auth.onAuthStateChanged(async user => {
                 const newMessageString = `
                 <div class="past-message ${user.uid}" id="${messageID}">
                 <p class="small-text">${username} dice:</p>
-                <p>${messageElement.value}</p>
+                <p class="message-content">${messageElement.value}</p>
                 <div class="hover-info ${user.uid}">
                 <button class="small-text" id="message-edit-${messageID}">Edit</button>
                 <button class="small-text" id="message-delete-${messageID}">Delete</button>
@@ -227,18 +236,18 @@ auth.onAuthStateChanged(async user => {
                         HTMLcontent: `
                     <div class="past-message ${user.uid}" id="${messageID}">
                 <p class="small-text">(Edited)\n ${username} dice:</p>
-                <p>${newMessage}</p>
+                <p class="message-content">${newMessage}</p>
                 <div class="hover-info ${user.uid}">
                 <button class="small-text" id="message-edit-${messageID}">Edit</button>
                 <button class="small-text" id="message-delete-${messageID}">Delete</button>
                 <input class="hidden-input" type="text" id="edit-field-${messageID}" placeholder="Press enter to confirm edit" autocomplete="off">    
                 </div>
                 </div>
-                    `, 
-                content: newMessage,
-                edited: true
-            })
-                console.log('Updated message')
+                    `,
+                        content: newMessage,
+                        edited: true
+                    })
+                    console.log('Updated message')
                 })
             }
 
@@ -258,7 +267,7 @@ auth.onAuthStateChanged(async user => {
                 // Use setTimeout to allow DOM updates before scrolling
                 setTimeout(() => {
                     window.scrollTo({ top: document.body.scrollHeight, left: 0, behavior: 'smooth' });
-                }, 0);
+                }, 75);
             }
 
             async function addToDB(data) {
