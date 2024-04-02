@@ -102,6 +102,8 @@ body {
 }
 
 .past-message {
+    display: flex;
+    flex-direction: column;
     max-width: 90vw;
     width: auto;
     justify-content: left;
@@ -118,18 +120,21 @@ body {
     font-size: 0.5em;
 }
 
-.past-message:hover .hover-info {
-    display:block;
-}
-
 .hover-info {
     display: none;
+}
+
+.hover-info button {
+    margin: 2px;
+    background: #73C8F5;
+    border-radius: 10px;
+    border: solid #73C8F5;
+}
+
+.hover-info button:hover {
+    cursor: pointer;
 }
 
 .hidden-input {
     display: none;
 }
-
-/* .past-message + .jv0lfg7oO8N4tXvVSNYZFc0U1q73 {
-    align-self: flex-end;
-} */

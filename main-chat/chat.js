@@ -3,8 +3,8 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getAuth, signOut, updateProfile } from "firebase/auth";
-import { getFirestore, addDoc, getDocs, collection, query, orderBy, onSnapshot, limitToLast, endBefore } from "firebase/firestore"
+import { getAuth, signOut } from "firebase/auth";
+import { getFirestore, addDoc, getDocs, collection, query, orderBy, onSnapshot, limitToLast, endBefore, where, doc, updateDoc, serverTimestamp } from "firebase/firestore"
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -46,12 +46,10 @@ auth.onAuthStateChanged(async user => {
 
             const orderQuery = query(collection(db, 'messages'), orderBy('id'), limitToLast(25))
             let firstFetch = true;
-            let delimiterMessage = null
             const onStartupFetcher = onSnapshot(orderQuery, (snapshot) => {
                 const docsArray = snapshot.docs
                 if (firstFetch === true) {
                     try {
-                        delimiterMessage = snapshot.docs[0]
                         docsArray.forEach(el => messageColumn.innerHTML += el.data().HTMLcontent);
                         ownMessageDisplay()
                         scrollToBottom()
@@ -63,8 +61,12 @@ auth.onAuthStateChanged(async user => {
                 } else {
                     try {
                         const newMsgQuery = query(collection(db, 'messages'), orderBy('id'), limitToLast(1))
-                        const newMessageFetcher = onSnapshot(newMsgQuery, (snapshot) => {
-                            messageColumn.innerHTML += snapshot.docs[0].data().HTMLcontent
+                        const newMessageFetcher = onSnapshot(newMsgQuery, (snapshotNewFetch) => {
+                            if (snapshotNewFetch.docs[0].data().edited === true) {
+                                
+                                return newMessageFetcher()
+                            }
+                            messageColumn.innerHTML += snapshotNewFetch.docs[0].data().HTMLcontent
                             ownMessageDisplay()
                             scrollToBottom()
                             if (!document.hasFocus()) {
@@ -84,7 +86,7 @@ auth.onAuthStateChanged(async user => {
                 if (document.title !== 'Hermahs App') document.title = 'Hermahs App'
             }
 
-            //Functions for scrolling and debounce
+            //Functions for scrolling and throttle
 
             const throttle = (callback, wait) => { //This function prevents whatever function provided to it as an argument from running immediately after, instead only running it if the timer is null, which it only is after the previous settimeout has ended. For more info look up throttling on Javascript
                 let timeoutId = null;
@@ -99,7 +101,7 @@ auth.onAuthStateChanged(async user => {
                 };
             }
 
-            const loadNewMessagesAtTop = 
+            const loadNewMessagesAtTop =
                 throttle((delimited = delimiterMessage) => { //calls the throttle function with the actual intended code of the function as the first parameter and the time to wait in ms as the second paramater
                     const infiniteLoadQuery = query(collection(db, 'messages'), orderBy('id', 'asc'), limitToLast(25), endBefore(delimited))
                     messageColumn.innerHTML = `<p id="loading-text-scroll" style="align-self:center;">Loading...</p>` + messageColumn.innerHTML
@@ -109,13 +111,14 @@ auth.onAuthStateChanged(async user => {
                             snapshot.docs.reverse().forEach((el) => {
                                 messageColumn.innerHTML = el.data().HTMLcontent + messageColumn.innerHTML
                             })
+                            console.log('Retrieved messages from infinite scroll')
                             ownMessageDisplay()
                             delimiterMessage = snapshot.docs[0]
                         } catch (error) {
                             console.error(error)
                         }
                     })
-                }, 2500); 
+                }, 2500);
 
             // -------------------------------------
 
@@ -174,7 +177,7 @@ auth.onAuthStateChanged(async user => {
                 <div class="past-message ${user.uid}" id="${messageID}">
                 <p class="small-text">${username} dice:</p>
                 <p>${messageElement.value}</p>
-                <div class="hover-info">
+                <div class="hover-info ${user.uid}">
                 <button class="small-text" id="message-edit-${messageID}">Edit</button>
                 <button class="small-text" id="message-delete-${messageID}">Delete</button>
                 <input class="hidden-input" type="text" id="edit-field-${messageID}" placeholder="Press enter to confirm edit" autocomplete="off">    
@@ -189,34 +192,54 @@ auth.onAuthStateChanged(async user => {
                     authorDisplayName: user.displayName ? user.displayName : '',
                     type: 'text',
                     HTMLcontent: newMessageString,
-                    content: messageElement.value
+                    content: messageElement.value,
+                    edited: false
                 })
                 messageElement.value = '';
                 scrollToBottom()
             }
 
+
             function ownMessageDisplay() {
                 const ownMessages = document.querySelectorAll(`.${CSS.escape(user.uid)}`)
+                const ownMessagesEditDiv = document.querySelectorAll(`.hover-info.${CSS.escape(user.uid)}`)
+                const ownMessagesUsernameDisplay = document.querySelectorAll(`.past-message.${CSS.escape(user.uid)} p.small-text`)
                 ownMessages.forEach(el => {
                     el.style.alignSelf = 'flex-end'
                     el.style.backgroundColor = 'lightblue'
                 })
+                ownMessagesEditDiv.forEach(el => {
+                    el.style.display = 'flex'
+                    el.style.alignSelf = 'center'
+                })
+                ownMessagesUsernameDisplay.forEach(el => {
+                    el.style.alignSelf = 'flex-end'
+                })
             }
 
             function editMessage(messageID, newMessage) {
-                const selectedMessage = document.getElementById(`${messageID}`)
-                selectedMessage.innerHTML = `
-                <p class="small-text">Message ID: ${messageID}</p>
-                <p class="small-text">(Edited)</p>
+                let messageDocID = '';
+                const editQuery = query(collection(db, 'messages'), where('id', '==', parseInt(messageID)))
+                getDocs(editQuery).then((snapshot) => {
+                    messageDocID = snapshot.docs[0].id
+                    const retrievedDocRef = doc(collection(db, 'messages'), messageDocID)
+                    updateDoc(retrievedDocRef, {
+                        HTMLcontent: `
+                    <div class="past-message ${user.uid}" id="${messageID}">
+                <p class="small-text">(Edited)\n ${username} dice:</p>
                 <p>${newMessage}</p>
-                <div class="hover-info">
+                <div class="hover-info ${user.uid}">
                 <button class="small-text" id="message-edit-${messageID}">Edit</button>
                 <button class="small-text" id="message-delete-${messageID}">Delete</button>
                 <input class="hidden-input" type="text" id="edit-field-${messageID}" placeholder="Press enter to confirm edit" autocomplete="off">    
                 </div>
-                `;
-
-                replaceItemInLocalStorage(messageID, selectedMessage.innerHTML)
+                </div>
+                    `, 
+                content: newMessage,
+                edited: true
+            })
+                console.log('Updated message')
+                })
             }
 
             function showEditInput(field, buttonEvent) {
