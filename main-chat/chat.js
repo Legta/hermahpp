@@ -4,7 +4,7 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth, signOut } from "firebase/auth";
-import { getFirestore, addDoc, getDocs, collection, query, orderBy, onSnapshot, limitToLast, endBefore, where, doc, updateDoc, serverTimestamp } from "firebase/firestore"
+import { getFirestore, addDoc, getDocs, collection, query, orderBy, onSnapshot, limitToLast, endBefore, where, doc, updateDoc, serverTimestamp, deleteDoc } from "firebase/firestore"
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -62,11 +62,19 @@ auth.onAuthStateChanged(async user => {
                     }
                 } else {
                     try {
+                        if (snapshot.docChanges()[0].type === 'removed') {
+                            const elementId = snapshot.docChanges()[0].doc.data().id
+                            const msgToDelete = document.getElementById(elementId)
+                            return msgToDelete.remove()
+                        }
                         const newMsgQuery = query(collection(db, 'messages'), orderBy('id'), limitToLast(1))
                         const newMessageFetcher = onSnapshot(newMsgQuery, (snapshotNewFetch) => {
                             if (snapshotNewFetch.docs[0].data().edited === true) {
                                 const msgBeingEditedId = snapshotNewFetch.docs[0].data().id;
                                 const msgBeingEdited = document.getElementById(msgBeingEditedId)
+                                if (!msgBeingEdited.children[0].innerText.includes('(Edited)')) {
+                                    msgBeingEdited.children[0].innerText = '(Edited) ' + msgBeingEdited.children[0].innerText
+                                }
                                 msgBeingEdited.children[1].innerText = snapshotNewFetch.docs[0].data().content
                                 return newMessageFetcher()
                             }
@@ -149,9 +157,9 @@ auth.onAuthStateChanged(async user => {
                 if (event.key === 'Enter') submitMessageText()
             })
 
-            const editButtonsParent = document.getElementById('messages-column'); //Get parent element of the buttons so I can have only one listener instead of one for each button
+            // const editButtonsParent = document.getElementById('messages-column'); //Get parent element of the buttons so I can have only one listener instead of one for each button
 
-            editButtonsParent.addEventListener('click', (event) => { //Listener that checks if the edit button was clicked and toggles the text field on and off
+            messageColumn.addEventListener('click', (event) => { //Listener that checks if the edit button was clicked and toggles the text field on and off
                 if (event.target.nodeName !== 'BUTTON') return;
                 if (event.target.id.startsWith('message-edit')) {
                     if (event.target.display === 'none') event.target.style.display = 'block';
@@ -167,15 +175,16 @@ auth.onAuthStateChanged(async user => {
                 if (event.target.id.startsWith('message-delete')) deleteMessage(event.target.id.slice(15));
             })
 
-            editButtonsParent.addEventListener('keydown', (event) => {
+            messageColumn.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter' && event.target.id.startsWith('edit-field')) {
                     const selectedMessageID = event.target.id.slice(11)
                     editMessage(selectedMessageID, event.target.value)
                     const newMessageInput = document.getElementById(`edit-field-${selectedMessageID}`)
                     newMessageInput.style.display = 'none';
                     const closeButton = document.getElementById(`close-edit-${selectedMessageID}`)
-                    closeButton.id = event.target.id.replace('close-edit', 'message-edit')
+                    closeButton.id = closeButton.id.replace('close-edit', 'message-edit')
                     closeButton.innerText = 'Edit'
+                    event.target.value = ''
                 }
             })
 
@@ -202,7 +211,8 @@ auth.onAuthStateChanged(async user => {
                     type: 'text',
                     HTMLcontent: newMessageString,
                     content: messageElement.value,
-                    edited: false
+                    edited: false,
+                    previousContent: '',
                 })
                 messageElement.value = '';
                 scrollToBottom()
@@ -230,6 +240,7 @@ auth.onAuthStateChanged(async user => {
                 let messageDocID = '';
                 const editQuery = query(collection(db, 'messages'), where('id', '==', parseInt(messageID)))
                 getDocs(editQuery).then((snapshot) => {
+                    const previousMsgContent = snapshot.docs[0].data().content
                     messageDocID = snapshot.docs[0].id
                     const retrievedDocRef = doc(collection(db, 'messages'), messageDocID)
                     updateDoc(retrievedDocRef, {
@@ -245,9 +256,21 @@ auth.onAuthStateChanged(async user => {
                 </div>
                     `,
                         content: newMessage,
-                        edited: true
+                        edited: true,
+                        previousContent: previousMsgContent
                     })
                     console.log('Updated message')
+                })
+            }
+
+            function deleteMessage (messageID) {
+                let messageDocID = '';
+                const deleteQuery = query(collection(db, 'messages'), where('id', '==', parseInt(messageID)))
+                getDocs(deleteQuery).then((snapshot) => {
+                    messageDocID = snapshot.docs[0].id
+                    const retrievedDocRef = doc(collection(db, 'messages'), messageDocID)
+                    deleteDoc(retrievedDocRef)
+                    console.log('Message deleted from database')
                 })
             }
 
