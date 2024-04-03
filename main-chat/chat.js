@@ -4,7 +4,7 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth, signOut } from "firebase/auth";
-import { getFirestore, addDoc, getDocs, collection, query, orderBy, onSnapshot, limitToLast, endBefore, where, doc, updateDoc, serverTimestamp, deleteDoc } from "firebase/firestore"
+import { getFirestore, addDoc, getDocs, collection, query, orderBy, onSnapshot, limitToLast, endBefore, where, doc, updateDoc, deleteDoc } from "firebase/firestore"
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -157,8 +157,6 @@ auth.onAuthStateChanged(async user => {
                 if (event.key === 'Enter') submitMessageText()
             })
 
-            // const editButtonsParent = document.getElementById('messages-column'); //Get parent element of the buttons so I can have only one listener instead of one for each button
-
             messageColumn.addEventListener('click', (event) => { //Listener that checks if the edit button was clicked and toggles the text field on and off
                 if (event.target.nodeName !== 'BUTTON') return;
                 if (event.target.id.startsWith('message-edit')) {
@@ -217,7 +215,6 @@ auth.onAuthStateChanged(async user => {
                 messageElement.value = '';
                 scrollToBottom()
             }
-
 
             function ownMessageDisplay() {
                 const ownMessages = document.querySelectorAll(`.${CSS.escape(user.uid)}`)
