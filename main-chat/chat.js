@@ -157,9 +157,9 @@ auth.onAuthStateChanged(async user => {
                 if (event.key === 'Enter') submitMessageText()
             })
 
-            const editButtonsParent = document.getElementById('messages-column'); //Get parent element of the buttons so I can have only one listener instead of one for each button
+            // const editButtonsParent = document.getElementById('messages-column'); //Get parent element of the buttons so I can have only one listener instead of one for each button
 
-            editButtonsParent.addEventListener('click', (event) => { //Listener that checks if the edit button was clicked and toggles the text field on and off
+            messageColumn.addEventListener('click', (event) => { //Listener that checks if the edit button was clicked and toggles the text field on and off
                 if (event.target.nodeName !== 'BUTTON') return;
                 if (event.target.id.startsWith('message-edit')) {
                     if (event.target.display === 'none') event.target.style.display = 'block';
@@ -175,15 +175,16 @@ auth.onAuthStateChanged(async user => {
                 if (event.target.id.startsWith('message-delete')) deleteMessage(event.target.id.slice(15));
             })
 
-            editButtonsParent.addEventListener('keydown', (event) => {
+            messageColumn.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter' && event.target.id.startsWith('edit-field')) {
                     const selectedMessageID = event.target.id.slice(11)
                     editMessage(selectedMessageID, event.target.value)
                     const newMessageInput = document.getElementById(`edit-field-${selectedMessageID}`)
                     newMessageInput.style.display = 'none';
                     const closeButton = document.getElementById(`close-edit-${selectedMessageID}`)
-                    closeButton.id = event.target.id.replace('close-edit', 'message-edit')
+                    closeButton.id = closeButton.id.replace('close-edit', 'message-edit')
                     closeButton.innerText = 'Edit'
+                    event.target.value = ''
                 }
             })
 
