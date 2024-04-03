@@ -47,7 +47,6 @@ auth.onAuthStateChanged(async user => {
             const orderQuery = query(collection(db, 'messages'), orderBy('id'), limitToLast(25))
             let firstFetch = true;
             let delimiterMessage = null;
-            let messageJustDeleted = false;
             const onStartupFetcher = onSnapshot(orderQuery, (snapshot) => {
                 const docsArray = snapshot.docs
                 if (firstFetch === true) {
@@ -63,17 +62,20 @@ auth.onAuthStateChanged(async user => {
                     }
                 } else {
                     try {
+                        if (snapshot.docChanges()[0].type === 'removed') {
+                            const elementId = snapshot.docChanges()[0].doc.data().id
+                            const msgToDelete = document.getElementById(elementId)
+                            return msgToDelete.remove()
+                        }
                         const newMsgQuery = query(collection(db, 'messages'), orderBy('id'), limitToLast(1))
                         const newMessageFetcher = onSnapshot(newMsgQuery, (snapshotNewFetch) => {
-                            if (messageJustDeleted) {
-                                messageJustDeleted = false
-                                return newMessageFetcher()
-                            };
                             if (snapshotNewFetch.docs[0].data().edited === true) {
                                 const msgBeingEditedId = snapshotNewFetch.docs[0].data().id;
                                 const msgBeingEdited = document.getElementById(msgBeingEditedId)
+                                if (!msgBeingEdited.children[0].innerText.includes('(Edited)')) {
+                                    msgBeingEdited.children[0].innerText = '(Edited) ' + msgBeingEdited.children[0].innerText
+                                }
                                 msgBeingEdited.children[1].innerText = snapshotNewFetch.docs[0].data().content
-                                messageJustDeleted = false
                                 return newMessageFetcher()
                             }
                             messageColumn.innerHTML += snapshotNewFetch.docs[0].data().HTMLcontent
@@ -83,7 +85,6 @@ auth.onAuthStateChanged(async user => {
                                 document.title = '(*) Hermahs App'
                                 notificationSound.play()
                             }
-                            messageJustDeleted = false
                             newMessageFetcher()
                         });
                     }
@@ -268,9 +269,7 @@ auth.onAuthStateChanged(async user => {
                     messageDocID = snapshot.docs[0].id
                     const retrievedDocRef = doc(collection(db, 'messages'), messageDocID)
                     deleteDoc(retrievedDocRef)
-                    console.log('Deleted message')
-                    document.getElementById(messageID).remove()
-                    messageJustDeleted = true
+                    console.log('Message deleted from database')
                 })
             }
 
