@@ -62,31 +62,32 @@ auth.onAuthStateChanged(async user => {
                     }
                 } else {
                     try {
-                        if (snapshot.docChanges()[0].type === 'removed') {
-                            const elementId = snapshot.docChanges()[0].doc.data().id
-                            const msgToDelete = document.getElementById(elementId)
-                            return msgToDelete.remove()
-                        }
-                        const newMsgQuery = query(collection(db, 'messages'), orderBy('id'), limitToLast(1))
-                        const newMessageFetcher = onSnapshot(newMsgQuery, (snapshotNewFetch) => {
-                            if (snapshotNewFetch.docs[0].data().edited === true) {
-                                const msgBeingEditedId = snapshotNewFetch.docs[0].data().id;
-                                const msgBeingEdited = document.getElementById(msgBeingEditedId)
-                                if (!msgBeingEdited.children[0].innerText.includes('(Edited)')) {
-                                    msgBeingEdited.children[0].innerText = '(Edited) ' + msgBeingEdited.children[0].innerText
-                                }
-                                msgBeingEdited.children[1].innerText = snapshotNewFetch.docs[0].data().content
-                                return newMessageFetcher()
-                            }
-                            messageColumn.innerHTML += snapshotNewFetch.docs[0].data().HTMLcontent
+                        if (snapshot.docChanges()[0].type === 'added') {
+                            messageColumn.innerHTML += snapshot.docChanges()[0].doc.data().HTMLcontent
                             ownMessageDisplay()
                             scrollToBottom()
                             if (!document.hasFocus()) {
                                 document.title = '(*) Hermahs App'
                                 notificationSound.play()
                             }
-                            newMessageFetcher()
-                        });
+                            return
+                        }
+                        if (snapshot.docChanges()[0].type === 'removed') {
+                            const elementId = snapshot.docChanges()[0].doc.data().id
+                            const msgToDelete = document.getElementById(elementId)
+                            return msgToDelete.remove()
+                        }
+                        if (snapshot.docChanges()[0].type === 'modified') {
+                            const elementId = snapshot.docChanges()[0].doc.data().id
+                            const msgToEdit = document.getElementById(elementId)
+                            const messageContent = snapshot.docChanges()[0].doc.data().content
+                            msgToEdit.children[1].innerText = messageContent
+                            if (!msgToEdit.children[0].innerText.includes('(Edited)')) {
+                                msgToEdit.children[0].innerText = '(Edited) ' + msgToEdit.children[0].innerText
+                            }
+                            return
+                        }
+                        console.log(snapshot.docChanges())
                     }
                     catch (error) {
                         console.error(error)
@@ -260,7 +261,7 @@ auth.onAuthStateChanged(async user => {
                 })
             }
 
-            function deleteMessage (messageID) {
+            function deleteMessage(messageID) {
                 let messageDocID = '';
                 const deleteQuery = query(collection(db, 'messages'), where('id', '==', parseInt(messageID)))
                 getDocs(deleteQuery).then((snapshot) => {
