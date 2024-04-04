@@ -222,7 +222,7 @@ auth.onAuthStateChanged(async user => {
                 const ownMessagesUsernameDisplay = document.querySelectorAll(`.past-message.${CSS.escape(user.uid)} p.small-text`)
                 ownMessages.forEach(el => {
                     el.style.alignSelf = 'flex-end'
-                    el.style.backgroundColor = 'lightblue'
+                    el.style.backgroundColor = '#5a54ab'
                 })
                 ownMessagesEditDiv.forEach(el => {
                     el.style.display = 'flex'

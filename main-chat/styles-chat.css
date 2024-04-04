@@ -7,6 +7,7 @@ body {
     font-family: 'Lato', 'sans-serif';
     font-size: 1.2em;
     scroll-behavior: smooth;
+    background-color: rgb(48, 48, 48);
 }
 
 #main-div {
@@ -107,12 +108,12 @@ body {
     max-width: 90vw;
     width: auto;
     justify-content: left;
-    padding: 2px 4px;
+    padding: 2px 7px;
     margin-top: 6px;
-    background: lightgrey;
+    color: rgb(196, 196, 196);
+    background: #676767;
     border-radius: 10px;
     text-align: left;
-    box-shadow: 0 0 15px;
     overflow-wrap: break-word;
 }
 
